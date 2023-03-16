@@ -734,7 +734,7 @@ void ExtendedTableWidget::ftestaction()
     // If we got here, a non-image cell was or multiple cells were selected, or copy with headers was requested.
     // In this case, we copy selected data into internal copy-paste buffer and then
     // we write a table both in HTML and text formats to the system clipboard.
-
+    //SELECT *,  datetime(Field3/1000, 'unixepoch') as "tm"  FROM t1
     // Copy selected data into internal copy-paste buffer
     int last_row = indices.first().row();
     BufferRow lst;
