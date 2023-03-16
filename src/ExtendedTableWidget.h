@@ -97,6 +97,7 @@ signals:
 private:
     void copyMimeData(const QModelIndexList& fromIndices, QMimeData* mimeData, const bool withHeaders, const bool inSQL);
     void copy(const bool withHeaders, const bool inSQL);
+    void ftestaction();
     void paste();
     void cut();
 

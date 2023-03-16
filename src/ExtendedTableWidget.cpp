@@ -27,7 +27,7 @@
 #include <QShortcut>
 
 #include <limits>
-
+#include<QDebug>
 using BufferRow = std::vector<QByteArray>;
 std::vector<BufferRow> ExtendedTableWidget::m_buffer;
 QString ExtendedTableWidget::m_generatorStamp;
@@ -285,6 +285,7 @@ ExtendedTableWidget::ExtendedTableWidget(QWidget* parent) :
     QAction* copyAction = new QAction(QIcon(":/icons/copy"), tr("Copy"), m_contextMenu);
     QAction* copyWithHeadersAction = new QAction(QIcon(":/icons/special_copy"), tr("Copy with Headers"), m_contextMenu);
     QAction* copyAsSQLAction = new QAction(QIcon(":/icons/sql_copy"), tr("Copy as SQL"), m_contextMenu);
+    QAction* testaction = new QAction(QIcon(":/icons/sql_copy"), tr("test action"), m_contextMenu);
     QAction* pasteAction = new QAction(QIcon(":/icons/paste"), tr("Paste"), m_contextMenu);
     QAction* printAction = new QAction(QIcon(":/icons/print"), tr("Print..."), m_contextMenu);
 
@@ -308,6 +309,7 @@ ExtendedTableWidget::ExtendedTableWidget(QWidget* parent) :
     m_contextMenu->addAction(copyAction);
     m_contextMenu->addAction(copyWithHeadersAction);
     m_contextMenu->addAction(copyAsSQLAction);
+    m_contextMenu->addAction(testaction);
     m_contextMenu->addAction(pasteAction);
     m_contextMenu->addSeparator();
     m_contextMenu->addAction(printAction);
@@ -339,6 +341,7 @@ ExtendedTableWidget::ExtendedTableWidget(QWidget* parent) :
         copyAction->setEnabled(enabled);
         copyWithHeadersAction->setEnabled(enabled);
         copyAsSQLAction->setEnabled(enabled);
+        testaction->setEnabled(enabled);
         printAction->setEnabled(enabled);
         condFormatAction->setEnabled(enabled);
 
@@ -404,6 +407,9 @@ ExtendedTableWidget::ExtendedTableWidget(QWidget* parent) :
     });
     connect(copyAsSQLAction, &QAction::triggered, this, [&]() {
        copy(false, true);
+    });
+    connect(testaction, &QAction::triggered, this, [&]() {
+        ftestaction();
     });
     connect(pasteAction, &QAction::triggered, this, [&]() {
        paste();
@@ -554,7 +560,10 @@ void ExtendedTableWidget::copyMimeData(const QModelIndexList& fromIndices, QMime
         }
         lst.push_back(indices.at(i).data(Qt::EditRole).toByteArray());
         last_row = indices.at(i).row();
+
+        m->setData(m->index(indices.at(i).row(), 3), 22);//first col idx- is 1
     }
+    emit m->layoutChanged();
     m_buffer.push_back(lst);
 
     QString sqlResult;
@@ -710,6 +719,32 @@ void ExtendedTableWidget::copy(const bool withHeaders, const bool inSQL )
     QMimeData *mimeData = new QMimeData;
     copyMimeData(selectionModel()->selectedIndexes(), mimeData, withHeaders, inSQL);
     qApp->clipboard()->setMimeData(mimeData);
+}
+
+void ExtendedTableWidget::ftestaction()
+{
+    QModelIndexList indices = selectionModel()->selectedRows();
+
+    // Abort if there's nothing to copy
+    if (indices.isEmpty())
+        return;
+
+    SqliteTableModel* m = qobject_cast<SqliteTableModel*>(model());
+
+    // If we got here, a non-image cell was or multiple cells were selected, or copy with headers was requested.
+    // In this case, we copy selected data into internal copy-paste buffer and then
+    // we write a table both in HTML and text formats to the system clipboard.
+
+    // Copy selected data into internal copy-paste buffer
+    int last_row = indices.first().row();
+    BufferRow lst;
+    for (int i = 0; i < indices.size(); i++)
+    {
+        qDebug()<<m->data(m->index(indices.at(i).row(), 1));//first col idx- is 1
+
+        m->setData(m->index(indices.at(i).row(), 3), 22);//first col idx- is 1
+    }
+    emit m->layoutChanged();
 }
 
 void ExtendedTableWidget::paste()
